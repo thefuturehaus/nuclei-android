@@ -58,7 +58,7 @@ class NucleiPlugin implements Plugin<Project> {
                 variant.registerJavaGeneratingTask(nucleiTask, nucleiTask.outputDir)
 
                 if (project.nuclei.apt) {
-                    def javaCompile = variant.javaCompile
+                    def javaCompile = variant.javaCompileProvider.get()
 
                     if (javaCompile != null) {
                         def outputDir = project.file("$project.buildDir/generated/nuclei/apt")
@@ -69,8 +69,11 @@ class NucleiPlugin implements Plugin<Project> {
                         if (defaultPackage == null || defaultPackage.length() == 0)
                             defaultPackage = "nuclei.persistence.apt";
 
+                        javaCompile.options.annotationProcessorPath = javaCompile.options.annotationProcessorPath
+                            .plus(project.rootProject.buildscript.configurations.classpath)
+                            .plus(javaCompile.classpath)
+                        
                         javaCompile.options.compilerArgs += [
-                                '-processorpath', (project.rootProject.buildscript.configurations.classpath + javaCompile.classpath).asPath,
                                 '-s', outputDir,
                                 '-AdefaultPackage=' + defaultPackage
                         ]
